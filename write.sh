@@ -7,6 +7,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 PAD=$(printf '%0.1s' "."{1..48})
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+cd "$DIR"
+TARGET="target"
+CONFIG="definitions.config"
+
 getTime() {
     echo $(($($DATE +%s%N)/1000000))
 }
@@ -40,6 +45,10 @@ function getFields() {
 	echo "$FIELDS"
 }
 
+function resetFiles() {
+	./cleanup.sh
+}
+
 if [[ -z "$1" ]]; then
 	echo "ERROR: missing field number"
 	exit 1
@@ -58,11 +67,12 @@ echo "Text length of fields: $2"
 
 if [[ -z "$3" ]]; then
 	echo "Single pass....."
-	mv -f input.pdf_original input.pdf >/dev/null 2>/dev/null
+	resetFiles
 	METADATA=$(getFields $1 $2)
-
+	ls -l "$TARGET"
 	execution_start=$(getTime)
-	echo "$(exiftool -config definitions.config $METADATA input.pdf)"
+	echo "exiftool -config $CONFIG $METADATA $TARGET"
+	echo "$(exiftool -config $CONFIG $METADATA $TARGET)"
 	execution_end=$(getTime)
 	execution_total=$(printf "%s%s" ${PAD:13} "$(getFormattedTime $((execution_end-execution_start)))")
 	echo ""
@@ -73,11 +83,13 @@ else
 	OVERALL=0
 	until [[ $LOOP -gt $3 ]]; do
 		echo "Loop #$LOOP"
-		mv -f input.pdf_original input.pdf >/dev/null 2>/dev/null
+		resetFiles
 		METADATA=$(getFields $1 $2)
-
+		
+		ls -l "$TARGET"
 		execution_start=$(getTime)
-		echo "$(exiftool -config definitions.config $METADATA input.pdf)"
+		echo "exiftool -config $CONFIG $METADATA $TARGET"
+		echo "$(exiftool -config $CONFIG $METADATA $TARGET)"
 		execution_end=$(getTime)
 		execution_total=$(printf "%s%s" ${PAD:13} "$(getFormattedTime $((execution_end-execution_start)))")
 		let OVERALL=OVERALL+$((execution_end-execution_start))
